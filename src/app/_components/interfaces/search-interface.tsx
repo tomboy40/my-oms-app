@@ -3,38 +3,51 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { InterfaceTable } from "./interface-table";
+import { type TableState } from "~/types/table";
+
+const initialTableState: TableState = {
+  page: 1,
+  pageSize: 10,
+  sortBy: "interfaceName",
+  sortDirection: "asc",
+};
 
 export function SearchInterface() {
   const [appId, setAppId] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [tableState, setTableState] = useState<TableState>(initialTableState);
 
+  const utils = api.useUtils();
+  
+  // Combined query for interfaces with table state
   const {
-    data: interfaces,
+    data,
     isLoading: isSearching,
-    refetch: searchInterfaces
-  } = api.dlas.searchInterfaces.useQuery(
-    { appId },
-    { enabled: false }
+    error: searchError
+  } = api.interface.search.useQuery(
+    { appId, tableState },
+    { 
+      enabled: Boolean(appId.trim()),
+      keepPreviousData: true // Smooth transitions during pagination
+    }
   );
 
+  // DLAS sync mutation
   const {
-    mutate: fetchFromDLAS,
-    isLoading: isFetching,
-    error: dlasError
-  } = api.dlas.fetchInterfaces.useMutation({
+    mutate: syncWithDLAS,
+    isLoading: isSyncing
+  } = api.dlas.synchronize.useMutation({
     onSuccess: () => {
-      void searchInterfaces();
+      // Invalidate queries to refetch data
+      void utils.interface.search.invalidate();
     },
   });
 
-  const handleSearch = () => {
-    if (!appId.trim()) {
-      setError("Application ID is required");
-      return;
-    }
-    setError(null);
-    void searchInterfaces();
+  const handleSearch = (newAppId: string) => {
+    setAppId(newAppId);
+    setTableState(initialTableState); // Reset pagination when searching new app
   };
+
+  const isLoading = isSearching || isSyncing;
 
   return (
     <div className="space-y-4">
@@ -42,47 +55,40 @@ export function SearchInterface() {
         <input
           type="text"
           value={appId}
-          onChange={(e) => setAppId(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Enter Application ID"
           className="w-full rounded-md border px-4 py-2 text-gray-900"
-          disabled={isSearching || isFetching}
+          disabled={isLoading}
         />
         <button
-          onClick={handleSearch}
-          disabled={isSearching || isFetching}
-          className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-        >
-          {isSearching ? "Searching..." : "Search"}
-        </button>
-        <button
-          onClick={() => fetchFromDLAS({ appId })}
-          disabled={isSearching || isFetching}
+          onClick={() => syncWithDLAS({ appId })}
+          disabled={!appId.trim() || isLoading}
           className="rounded-md bg-green-500 px-4 py-2 text-white hover:bg-green-600 disabled:opacity-50"
         >
-          {isFetching ? "Fetching..." : "Fetch from DLAS"}
+          {isSyncing ? "Syncing..." : "Sync DLAS"}
         </button>
       </div>
 
-      {error && (
+      {searchError && (
         <div className="text-sm text-red-500">
-          {error}
+          {searchError.message}
         </div>
       )}
 
-      {dlasError && (
-        <div className="text-sm text-red-500">
-          {dlasError.message}
-        </div>
-      )}
-
-      {interfaces?.length === 0 && (
+      {data?.interfaces.length === 0 && (
         <div className="text-sm text-gray-500">
           No interfaces found
         </div>
       )}
 
-      {interfaces && interfaces.length > 0 && (
-        <InterfaceTable data={interfaces} />
+      {data && (
+        <InterfaceTable
+          data={data.interfaces}
+          pagination={data.pagination}
+          tableState={tableState}
+          onTableStateChange={setTableState}
+          isLoading={isLoading}
+        />
       )}
     </div>
   );

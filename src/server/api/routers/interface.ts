@@ -1,78 +1,32 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { DBInterfaceSchema } from "~/types/interface-schema";
-import { TRPCError } from "@trpc/server";
-
-const updateInterfaceSchema = z.object({
-  id: z.string(),
-  sla: z.string().optional(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
-  remarks: z.string().nullable(),
-});
+import { TableStateSchema } from "~/types/table";
 
 export const interfaceRouter = createTRPCRouter({
-  // Get all interfaces
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    // Implementation here
-    return ctx.db.interface.findMany();
-  }),
-
-  // Update interface
-  update: publicProcedure
-    .input(DBInterfaceSchema.partial().extend({
-      eimInterfaceId: z.string(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      // Implementation here
-    }),
-
-  // Sync with DLAS
-  syncWithDLAS: publicProcedure.mutation(async ({ ctx }) => {
-    // Implementation here
-  }),
-
   search: publicProcedure
-    .input(
-      z.object({
-        appId: z.string().min(1, "Application ID is required"),
-        searchTerm: z.string().optional(),
-        direction: z.enum(["IN", "OUT"]).optional(),
-        status: z.string().optional(),
-      })
-    )
+    .input(z.object({
+      appId: z.string().min(1, "Application ID is required"),
+      tableState: TableStateSchema,
+    }))
     .query(async ({ ctx, input }) => {
-      try {
-        const { appId, searchTerm, direction, status } = input;
+      const { appId, tableState } = input;
+      const skip = (tableState.page - 1) * tableState.pageSize;
 
-        const whereClause = {
-          OR: [
-            { sendAppId: appId },
-            { receivedAppId: appId },
-          ],
-          AND: [
-            ...(direction ? [{ direction }] : []),
-            ...(status ? [{ interfaceStatus: status }] : []),
-            ...(searchTerm
-              ? [
-                  {
-                    OR: [
-                      { interfaceName: { contains: searchTerm, mode: "insensitive" } },
-                      { eimInterfaceId: { contains: searchTerm, mode: "insensitive" } },
-                      { sendAppName: { contains: searchTerm, mode: "insensitive" } },
-                      { receivedAppName: { contains: searchTerm, mode: "insensitive" } },
-                    ],
-                  },
-                ]
-              : []),
-          ],
-        };
+      // Simple where clause just for appId
+      const whereClause = {
+        OR: [
+          { sendAppId: appId },
+          { receivedAppId: appId }
+        ]
+      };
 
-        const interfaces = await ctx.db.interface.findMany({
+      const [total, interfaces] = await Promise.all([
+        ctx.db.interface.count({ where: whereClause }),
+        ctx.db.interface.findMany({
           where: whereClause,
-          orderBy: [
-            { updatedAt: "desc" },
-            { interfaceName: "asc" },
-          ],
+          skip,
+          take: tableState.pageSize,
+          orderBy: { [tableState.sortBy]: tableState.sortDirection },
           select: {
             id: true,
             eimInterfaceId: true,
@@ -91,29 +45,16 @@ export const interfaceRouter = createTRPCRouter({
             interfaceStatus: true,
             remarks: true,
           },
-        });
+        }),
+      ]);
 
-        return interfaces;
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to search interfaces",
-          cause: error,
-        });
-      }
-    }),
-
-  updateDetails: publicProcedure
-    .input(updateInterfaceSchema)
-    .mutation(async ({ ctx, input }) => {
-      const updated = await ctx.db.interface.update({
-        where: { id: input.id },
-        data: {
-          sla: input.sla,
-          priority: input.priority,
-          remarks: input.remarks,
+      return {
+        interfaces,
+        pagination: {
+          total,
+          pageCount: Math.ceil(total / tableState.pageSize),
+          page: tableState.page,
         },
-      });
-      return updated;
+      };
     }),
 }); 
