@@ -3,6 +3,13 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import { DBInterfaceSchema } from "~/types/interface-schema";
 import { TRPCError } from "@trpc/server";
 
+const updateInterfaceSchema = z.object({
+  id: z.string(),
+  sla: z.string().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  remarks: z.string().nullable(),
+});
+
 export const interfaceRouter = createTRPCRouter({
   // Get all interfaces
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -94,5 +101,19 @@ export const interfaceRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  updateDetails: publicProcedure
+    .input(updateInterfaceSchema)
+    .mutation(async ({ ctx, input }) => {
+      const updated = await ctx.db.interface.update({
+        where: { id: input.id },
+        data: {
+          sla: input.sla,
+          priority: input.priority,
+          remarks: input.remarks,
+        },
+      });
+      return updated;
     }),
 }); 

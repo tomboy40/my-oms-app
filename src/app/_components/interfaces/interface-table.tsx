@@ -3,6 +3,7 @@
 import { type Interface } from "~/types/interfaces";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Download } from "lucide-react";
+import { InterfaceDetails } from "./interface-details";
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
@@ -129,13 +130,16 @@ export function InterfaceTable({ data }: InterfaceTableProps) {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedData.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50">
-                {COLUMNS.map(col => (
-                  <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {row[col.key as keyof Interface] ?? "N/A"}
-                  </td>
-                ))}
-              </tr>
+              <tr key={row.id}>
+              {COLUMNS.map(col => (
+                <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {row[col.key as keyof Interface] ?? "N/A"}
+                </td>
+              ))}
+              <td className="px-6 py-4">
+                <InterfaceDetails interface={row} />
+              </td>
+            </tr>
             ))}
           </tbody>
         </table>
