@@ -30,4 +30,46 @@ export const dlasRouter = createTRPCRouter({
         pattern: iface.Pattern,
       }));
     }),
+
+  searchInterfaces: publicProcedure
+    .input(
+      z.object({
+        appId: z.string().min(1, "Application ID is required"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const interfaces = await ctx.db.interface.findMany({
+        where: {
+          OR: [
+            { sendAppId: input.appId },
+            { receivedAppId: input.appId }
+          ]
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        },
+        select: {
+          id: true,
+          status: true,
+          direction: true,
+          eimInterfaceId: true,
+          interfaceName: true,
+          sendAppId: true,
+          sendAppName: true,
+          receivedAppId: true,
+          receivedAppName: true,
+          transferType: true,
+          frequency: true,
+          technology: true,
+          pattern: true,
+          sla: true,
+          priority: true,
+          interfaceStatus: true,
+          remarks: true,
+          updatedAt: true
+        }
+      });
+
+      return interfaces;
+    }),
 }); 
