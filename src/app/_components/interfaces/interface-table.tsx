@@ -8,13 +8,20 @@ import { InterfaceDetails } from "./interface-details";
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
 const COLUMNS = [
+  { key: "id", label: "Interface ID" },
   { key: "interfaceName", label: "Interface Name" },
-  { key: "eimInterfaceId", label: "EIM ID" },
-  { key: "direction", label: "Direction" },
-  { key: "status", label: "Status" },
+  { key: "sendAppId", label: "Send App ID" },
+  { key: "sendAppName", label: "Send App Name" },
+  { key: "receivedAppId", label: "Receive App ID" },
+  { key: "receivedAppName", label: "Receive App Name" },
+  { key: "transferType", label: "Transfer Type" },
+  { key: "frequency", label: "Frequency" },
+  { key: "pattern", label: "Pattern" },
   { key: "technology", label: "Technology" },
-  { key: "sendAppName", label: "Source App" },
-  { key: "receivedAppName", label: "Target App" },
+  { key: "interfaceStatus", label: "Interface Status" },
+  { key: "priority", label: "Priority" },
+  { key: "sla", label: "SLA" },
+  { key: "remarks", label: "Remarks" },
 ] as const;
 
 type SortDirection = "asc" | "desc";
