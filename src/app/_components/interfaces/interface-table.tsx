@@ -8,7 +8,7 @@ import { InterfaceDetails } from "./interface-details";
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
 const COLUMNS = [
-  { key: "id", label: "Interface ID" },
+  { key: "eimInterfaceId", label: "Interface ID" },
   { key: "interfaceName", label: "Interface Name" },
   { key: "sendAppId", label: "Send App ID" },
   { key: "sendAppName", label: "Send App Name" },

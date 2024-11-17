@@ -30,9 +30,18 @@ export function InterfaceDetails({ interface: iface, onUpdate }: InterfaceDetail
           if (!old) return old;
           return {
             ...old,
-            interfaces: old.interfaces.map((i: Interface) =>
-              i.id === iface.id ? { ...i, ...newData } : i
-            ),
+            interfaces: old.interfaces.map((i: Interface) => {
+              if (i.id === iface.id) {
+                return {
+                  ...i,
+                  sla: newData.sla ?? null,
+                  priority: newData.priority as "LOW" | "MEDIUM" | "HIGH",
+                  remarks: newData.remarks ?? null,
+                  interfaceStatus: i.interfaceStatus
+                };
+              }
+              return i;
+            }),
           };
         }
       );

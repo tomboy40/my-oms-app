@@ -12,12 +12,9 @@ export const DLASInterfaceSchema = z.object({
   Frequency: z.string(),
   Technology: z.string(),
   Pattern: z.string(),
-}).and(
-  z.union([
-    z.object({ InterfaceName: z.string(), EIMInterfaceName: z.never() }),
-    z.object({ EIMInterfaceName: z.string(), InterfaceName: z.never() })
-  ])
-);
+  InterfaceName: z.string().optional(),
+  EIMInterfaceName: z.string().optional()
+});
 
 export const DLASResponseSchema = z.object({
   appid: z.string(),

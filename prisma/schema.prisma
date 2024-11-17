@@ -21,12 +21,9 @@ model Post {
 
 model Interface {
     id              String      @id // SHA-256 hash of key fields
-    name            String
-    description     String?     @db.Text
     
     // DLAS Fields
     status          String      // DLAS status
-    type            String
     direction       String?
     eimInterfaceId  String?
     interfaceName   String?

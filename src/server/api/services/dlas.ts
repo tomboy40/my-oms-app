@@ -9,9 +9,13 @@ export class DLASService {
   static async fetchInterfaces(appId: string): Promise<z.infer<typeof DLASResponseSchema>> {
     try {
       const url = `${this.baseUrl}?category=interface&appid=${appId}`;
+      console.log('[DLAS] Fetching from URL:', url);
+      
       const response = await fetch(url);
+      console.log('[DLAS] Response status:', response.status);
       
       if (!response.ok) {
+        console.error('[DLAS] Response not OK:', response.statusText);
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `DLAS API error: ${response.statusText}`,
@@ -19,9 +23,11 @@ export class DLASService {
       }
 
       const data = await response.json();
+      console.log('[DLAS] Raw response:', JSON.stringify(data, null, 2));
+      
       const parsed = DLASResponseSchema.safeParse(data);
-
       if (!parsed.success) {
+        console.error('[DLAS] Schema validation errors:', parsed.error.errors);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Invalid DLAS API response format",
@@ -31,6 +37,7 @@ export class DLASService {
 
       return parsed.data;
     } catch (error) {
+      console.error('[DLAS] Error details:', error);
       if (error instanceof TRPCError) throw error;
       
       throw new TRPCError({
@@ -42,11 +49,12 @@ export class DLASService {
   }
 
   static generateInterfaceId(dlasInterface: z.infer<typeof DLASInterfaceSchema>): string {
+    const interfaceName = dlasInterface.InterfaceName || dlasInterface.EIMInterfaceName || '';
     const values = [
       dlasInterface.SendAppID,
       dlasInterface.ReceivedAppID,
       dlasInterface.EIMInterfaceID ?? "",
-      dlasInterface.InterfaceName ?? dlasInterface.EIMInterfaceName,
+      interfaceName,
       dlasInterface.TransferType,
       dlasInterface.Frequency,
       dlasInterface.Technology,

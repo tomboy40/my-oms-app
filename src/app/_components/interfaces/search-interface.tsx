@@ -17,6 +17,7 @@ const initialTableState: TableState = {
 
 export function SearchInterface() {
   const [appId, setAppId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [tableState, setTableState] = useState<TableState>(initialTableState);
 
   const utils = api.useUtils();
@@ -26,15 +27,14 @@ export function SearchInterface() {
     isLoading: isSearching,
     error: searchError
   } = api.interface.search.useQuery(
-    { appId, tableState },
+    { appId: searchQuery, tableState },
     { 
-      enabled: Boolean(appId.trim()),
+      enabled: Boolean(searchQuery.trim()),
       staleTime: Infinity,
       retry: false
     }
   );
-
-  const { mutate: syncWithDLAS } = api.dlas.synchronize.useMutation({
+  const { mutate: syncWithDLAS, isLoading: isSyncing } = api.dlas.synchronize.useMutation({
     onSuccess: (result) => {
       toast.success("Sync completed", {
         description: `${result.message}`
@@ -47,8 +47,10 @@ export function SearchInterface() {
       });
     }
   });
-  const { isPending: isSyncing } = api.dlas.synchronize.useMutation();
-  const isLoading = isSearching || isSyncing;
+
+  const handleSearch = () => {
+    setSearchQuery(appId);
+  };
 
   return (
     <div className="space-y-4">
@@ -61,21 +63,32 @@ export function SearchInterface() {
             onChange={(e) => setAppId(e.target.value)}
             placeholder="Enter Application ID"
             className="w-full rounded-md border pl-10 pr-4 py-2 text-gray-900"
-            disabled={isLoading}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
           />
         </div>
         <button
-          onClick={() => syncWithDLAS({ appId })}
-          disabled={!appId.trim() || isLoading}
+          onClick={handleSearch}
+          disabled={!appId.trim() || isSyncing}
+          className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+        >
+          Search
+        </button>
+        <button
+          onClick={() => syncWithDLAS({ appId: searchQuery })}
+          disabled={!searchQuery.trim() || isSyncing}
           className="rounded-md bg-green-500 px-4 py-2 text-white hover:bg-green-600 disabled:opacity-50"
         >
           {isSyncing ? "Syncing..." : "Sync DLAS"}
         </button>
       </div>
 
-      {isLoading && <InterfaceSkeleton />}
+      {isSearching && <InterfaceSkeleton />}
 
-      {!isLoading && searchError && (
+      {!isSearching && searchError && (
         <div className="rounded-md bg-red-50 p-4">
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-red-400" />
@@ -87,7 +100,7 @@ export function SearchInterface() {
         </div>
       )}
 
-      {!isLoading && !searchError && data?.interfaces.length === 0 && (
+      {!isSearching && !searchError && data?.interfaces.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500">No interfaces found</div>
           <p className="text-sm text-gray-400 mt-2">

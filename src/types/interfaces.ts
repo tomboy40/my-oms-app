@@ -3,11 +3,9 @@ import { z } from "zod";
 // Zod schema for validation
 export const interfaceSchema = z.object({
   id: z.string(),
-  description: z.string().optional(),
   
   // DLAS Fields
   status: z.string(),
-  type: z.string(),
   direction: z.string().optional(),
   eimInterfaceId: z.string().optional(),
   interfaceName: z.string().optional(),
