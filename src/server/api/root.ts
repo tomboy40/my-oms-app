@@ -1,8 +1,8 @@
 import { createTRPCRouter } from "~/server/api/trpc";
-import { interfaceRouter } from "./routers/interface";
+import { dlasRouter } from "./routers/dlas";
 
 export const appRouter = createTRPCRouter({
-  interface: interfaceRouter,
+  dlas: dlasRouter,
 });
 
 export type AppRouter = typeof appRouter;
