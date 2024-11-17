@@ -35,9 +35,14 @@ interface TableState {
 
 interface InterfaceTableProps {
   data: Interface[];
+  page: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: "asc" | "desc";
+  onStateChange: (state: TableState) => void;
 }
 
-export function InterfaceTable({ data }: InterfaceTableProps) {
+export function InterfaceTable({ data, page, pageSize, sortBy, sortDirection, onStateChange }: InterfaceTableProps) {
   const [tableState, setTableState] = useState<TableState>({
     page: 1,
     pageSize: 10,
@@ -90,6 +95,7 @@ export function InterfaceTable({ data }: InterfaceTableProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm">Show</span>
           <select
+            aria-label="Number of entries per page"
             value={tableState.pageSize}
             onChange={(e) => setTableState(prev => ({
               ...prev,
@@ -140,7 +146,9 @@ export function InterfaceTable({ data }: InterfaceTableProps) {
               <tr key={row.id}>
               {COLUMNS.map(col => (
                 <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {row[col.key as keyof Interface] ?? "N/A"}
+                  {typeof row[col.key as keyof Interface] === 'object' && row[col.key as keyof Interface] instanceof Date
+                    ? (row[col.key as keyof Interface] as Date).toLocaleDateString()
+                    : String(row[col.key as keyof Interface] ?? "N/A")}
                 </td>
               ))}
               <td className="px-6 py-4">

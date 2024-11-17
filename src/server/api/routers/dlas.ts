@@ -10,8 +10,7 @@ export const dlasRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        // Existing synchronization logic...
-        const result = await DLASService.synchronize(input.appId, ctx.db);
+        const result = await DLASService.fetchInterfaces(input.appId);
         
         return {
           status: "success",
@@ -35,7 +34,7 @@ export const dlasRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       try {
-        const interfaces = await ctx.db.interface.findMany({
+        const interfaces = await ctx.db.Interface.findMany({
           where: {
             OR: [
               { sendAppId: input.appId },

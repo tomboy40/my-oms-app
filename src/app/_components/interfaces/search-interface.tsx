@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { InterfaceTable } from "./interface-table";
 import { InterfaceSkeleton } from "./interface-skeleton";
 import { Search, AlertCircle } from "lucide-react";
+import { TableState } from "~/types/table";
 
 const initialTableState: TableState = {
   page: 1,
@@ -28,19 +29,15 @@ export function SearchInterface() {
     { appId, tableState },
     { 
       enabled: Boolean(appId.trim()),
-      keepPreviousData: true,
-      onError: (error) => {
-        toast.error("Failed to search interfaces", {
-          description: error.message
-        });
-      }
+      staleTime: Infinity,
+      retry: false
     }
   );
 
-  const { mutate: syncWithDLAS, isLoading: isSyncing } = api.dlas.synchronize.useMutation({
+  const { mutate: syncWithDLAS } = api.dlas.synchronize.useMutation({
     onSuccess: (result) => {
       toast.success("Sync completed", {
-        description: `Updated: ${result.updated}, Added: ${result.inserted}, Deactivated: ${result.deactivated}`
+        description: `${result.message}`
       });
       void utils.interface.search.invalidate();
     },
@@ -50,7 +47,7 @@ export function SearchInterface() {
       });
     }
   });
-
+  const { isPending: isSyncing } = api.dlas.synchronize.useMutation();
   const isLoading = isSearching || isSyncing;
 
   return (
@@ -98,12 +95,13 @@ export function SearchInterface() {
           </p>
         </div>
       )}
-
-      {data?.interfaces.length > 0 && (
+      {data && data.interfaces.length > 0 && (
         <InterfaceTable
           data={data.interfaces}
-          pagination={data.pagination}
-          tableState={tableState}
+          page={tableState.page}
+          pageSize={tableState.pageSize}
+          sortBy={tableState.sortBy} 
+          sortDirection={tableState.sortDirection}
           onStateChange={setTableState}
         />
       )}

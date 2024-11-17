@@ -54,6 +54,6 @@ export class DLASService {
     ];
     
     const key = values.join("|:|");
-    return crypto.createHash("sha256").update(key).digest("hex");
+    return require('crypto').createHash("sha256").update(key).digest("hex");
   }
 } 

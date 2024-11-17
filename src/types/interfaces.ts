@@ -3,7 +3,6 @@ import { z } from "zod";
 // Zod schema for validation
 export const interfaceSchema = z.object({
   id: z.string(),
-  name: z.string(),
   description: z.string().optional(),
   
   // DLAS Fields

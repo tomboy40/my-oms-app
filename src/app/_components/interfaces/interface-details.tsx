@@ -21,30 +21,33 @@ export function InterfaceDetails({ interface: iface, onUpdate }: InterfaceDetail
   
   const { mutate: updateDetails } = api.interface.updateDetails.useMutation({
     onMutate: async (newData) => {
-      // Cancel outgoing fetches
       await utils.interface.search.cancel();
-
-      // Get current data
       const previousData = utils.interface.search.getData();
 
-      // Optimistically update the interface
-      utils.interface.search.setData(undefined, (old) => {
-        if (!old) return old;
-        return old.map((i) =>
-          i.id === iface.id ? { ...i, ...newData } : i
-        );
-      });
+      utils.interface.search.setData(
+        { appId: iface.sendAppId ?? "", tableState: { page: 1, pageSize: 10, sortBy: "interfaceName", sortDirection: "asc" } },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            interfaces: old.interfaces.map((i: Interface) =>
+              i.id === iface.id ? { ...i, ...newData } : i
+            ),
+          };
+        }
+      );
 
       return { previousData };
     },
     onError: (err, newData, context) => {
-      // Rollback on error
       if (context?.previousData) {
-        utils.interface.search.setData(undefined, context.previousData);
+        utils.interface.search.setData(
+          { appId: iface.sendAppId ?? "", tableState: { page: 1, pageSize: 10, sortBy: "interfaceName", sortDirection: "asc" } },
+          context.previousData
+        );
       }
     },
     onSettled: () => {
-      // Refetch after error or success
       void utils.interface.search.invalidate();
     },
   });
@@ -53,7 +56,9 @@ export function InterfaceDetails({ interface: iface, onUpdate }: InterfaceDetail
     e.preventDefault();
     updateDetails({
       id: iface.id,
-      ...formData,
+      sla: formData.sla,
+      priority: formData.priority.toUpperCase() as "LOW" | "MEDIUM" | "HIGH",
+      remarks: formData.remarks,
     });
     setIsEditing(false);
     onUpdate?.({ ...iface, ...formData });
@@ -70,19 +75,21 @@ export function InterfaceDetails({ interface: iface, onUpdate }: InterfaceDetail
               value={formData.sla}
               onChange={(e) => setFormData(prev => ({ ...prev, sla: e.target.value }))}
               className="mt-1 block w-full rounded-md border p-2"
+              aria-label="SLA"
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700">Priority</label>
             <select
+              aria-label="Priority"
               value={formData.priority}
-              onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as "Low" | "Medium" | "High" }))}
               className="mt-1 block w-full rounded-md border p-2"
             >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
             </select>
           </div>
           
@@ -93,6 +100,7 @@ export function InterfaceDetails({ interface: iface, onUpdate }: InterfaceDetail
               onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
               className="mt-1 block w-full rounded-md border p-2"
               rows={3}
+              aria-label="Remarks"
             />
           </div>
 

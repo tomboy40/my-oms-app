@@ -65,4 +65,21 @@ export const interfaceRouter = createTRPCRouter({
         });
       }
     }),
+  updateDetails: publicProcedure
+    .input(z.object({
+      id: z.string(),
+      sla: z.string().optional(),
+      priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+      remarks: z.string().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.interface.update({
+        where: { id: input.id },
+        data: {
+          sla: input.sla,
+          priority: input.priority,
+          remarks: input.remarks,
+        },
+      });
+    }),
 }); 
