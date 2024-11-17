@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { DLASService } from "../services/dlas";
-import { type Interface } from "~/types/db";
+import { type DBInterface } from "~/types/interface-schema";
 
 export const dlasRouter = createTRPCRouter({
   fetchInterfaces: publicProcedure
@@ -93,8 +93,8 @@ export const dlasRouter = createTRPCRouter({
 
         // 3. Process updates in a transaction
         const result = await ctx.db.$transaction(async (tx) => {
-          const updates: Interface[] = [];
-          const inserts: Interface[] = [];
+          const updates: DBInterface[] = [];
+          const inserts: DBInterface[] = [];
           const deactivates: string[] = [];
 
           // Create lookup map for existing interfaces

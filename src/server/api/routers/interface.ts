@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { DBInterfaceSchema } from "~/types/db";
+import { DBInterfaceSchema } from "~/types/interface-schema";
 import { TRPCError } from "@trpc/server";
 
 export const interfaceRouter = createTRPCRouter({
