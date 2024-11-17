@@ -18,3 +18,52 @@ model Post {
 
     @@index([name])
 }
+
+model Interface {
+    id              String      @id // SHA-256 hash of key fields
+    name            String
+    description     String?     @db.Text
+    
+    // DLAS Fields
+    status          String      // DLAS status
+    type            String
+    direction       String?
+    eimInterfaceId  String?
+    interfaceName   String?
+    sendAppId       String?
+    sendAppName     String?
+    receivedAppId   String?
+    receivedAppName String?
+    transferType    String?
+    frequency       String?
+    technology      String?
+    pattern         String?
+    
+    // Local Fields
+    interfaceStatus InterfaceStatus @default(ACTIVE)
+    sla             String?
+    priority        Priority        @default(LOW)
+    remarks         String?         @db.Text
+
+    // Audit Fields
+    createdAt       DateTime    @default(now())
+    updatedAt       DateTime    @updatedAt
+    createdBy       String?
+    updatedBy       String?
+
+    @@index([sendAppId])
+    @@index([receivedAppId])
+    @@index([eimInterfaceId])
+    @@index([interfaceStatus])
+}
+
+enum InterfaceStatus {
+    ACTIVE
+    INACTIVE
+}
+
+enum Priority {
+    LOW
+    MEDIUM
+    HIGH
+}
