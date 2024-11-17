@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { InterfaceTable } from "./interface-table";
 
 export function SearchInterface() {
   const [appId, setAppId] = useState("");
@@ -81,22 +82,7 @@ export function SearchInterface() {
       )}
 
       {interfaces && interfaces.length > 0 && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {interfaces.map((iface) => (
-            <div
-              key={iface.id}
-              className="rounded-lg border bg-white p-4 shadow-sm"
-            >
-              <h3 className="font-medium">{iface.interfaceName}</h3>
-              <div className="mt-2 space-y-1 text-sm text-gray-500">
-                <p>EIM ID: {iface.eimInterfaceId || 'N/A'}</p>
-                <p>Direction: {iface.direction}</p>
-                <p>Status: {iface.interfaceStatus}</p>
-                <p>Technology: {iface.technology}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <InterfaceTable data={interfaces} />
       )}
     </div>
   );
